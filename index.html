@@ -5,7 +5,6 @@
 <title>India PIN & Village Search</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-
 <style>
 body { font-family: Arial; background: #eef2f7; margin: 0; }
 .header { background: #0d6efd; color: white; padding: 15px; text-align: center; }
@@ -27,7 +26,7 @@ button { background: #198754; color: white; border: none; cursor: pointer; }
 <body>
 
 <div class="header">
-  <h2>India PIN & Village Search</h2>
+  <h2>Andhra Pradesh PIN & Village Search</h2>
 </div>
 
 <div class="container">
@@ -57,24 +56,32 @@ button { background: #198754; color: white; border: none; cursor: pointer; }
       <div style="background:#f0f0f0; color:#555; padding:10px; border-radius:5px;">Ad Spot 3</div>
   </div>
 
-  <div class="footer">© 2025 PIN Code Search</div>
+  <div class="footer">© 2025 Andhra Pradesh PIN Code Search</div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 let map, marker, activeVillage=null;
-map = L.map('map').setView([20.5937,78.9629],5);
+map = L.map('map').setView([16.5, 80.6],6); // Center Andhra Pradesh
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap' }).addTo(map);
 
-// All Indian States & UTs
-const states = [
-  "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat",
-  "Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh",
-  "Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan",
-  "Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal",
-  "Andaman and Nicobar Islands","Chandigarh","Dadra and Nagar Haveli and Daman and Diu",
-  "Delhi","Jammu and Kashmir","Ladakh","Lakshadweep","Puducherry"
-];
+// Full State & Districts for Andhra Pradesh
+const data = {
+  "Andhra Pradesh": {
+    "Anantapur": {},
+    "Chittoor": {},
+    "East Godavari": {},
+    "Guntur": {},
+    "Krishna": {},
+    "Kurnool": {},
+    "Prakasam": {},
+    "Srikakulam": {},
+    "Visakhapatnam": {},
+    "Vizianagaram": {},
+    "West Godavari": {},
+    "YSR Kadapa": {}
+  }
+};
 
 const stateSelect=document.getElementById("state");
 const districtSelect=document.getElementById("district");
@@ -83,45 +90,46 @@ const villageSelect=document.getElementById("village");
 
 // Populate states
 function populateStates(){
-  stateSelect.innerHTML = '<option value="">Select State</option>';
-  states.forEach(s=>{
-    stateSelect.innerHTML += `<option value="${s}">${s}</option>`;
-  });
+  stateSelect.innerHTML='<option value="">Select State</option>';
+  for(let s in data){ stateSelect.innerHTML += `<option value="${s}">${s}</option>`; }
   districtSelect.innerHTML='<option value="">Select District</option>';
   mandalSelect.innerHTML='<option value="">Select Mandal</option>';
   villageSelect.innerHTML='<option value="">Select Village</option>';
 }
 populateStates();
 
-// On state change → clear next dropdowns
-stateSelect.onchange = function(){
+// Update district dropdown
+stateSelect.onchange=function(){
+  let state=this.value;
   districtSelect.innerHTML='<option value="">Select District</option>';
   mandalSelect.innerHTML='<option value="">Select Mandal</option>';
   villageSelect.innerHTML='<option value="">Select Village</option>';
-  // You will add district data here next...
+  if(state && data[state]){
+    for(let d in data[state]){
+      districtSelect.innerHTML += `<option value="${d}">${d}</option>`;
+    }
+  }
 }
 
-// On district change → clear next dropdowns
-districtSelect.onchange = function(){
+// Clear mandal & village on district change
+districtSelect.onchange=function(){
   mandalSelect.innerHTML='<option value="">Select Mandal</option>';
   villageSelect.innerHTML='<option value="">Select Village</option>';
-  // You will add mandal data here next...
 }
 
-// On mandal change → clear village
-mandalSelect.onchange = function(){
+// Clear village on mandal change
+mandalSelect.onchange=function(){
   villageSelect.innerHTML='<option value="">Select Village</option>';
-  // You will add village data here next...
 }
 
-// Search (by PIN or by dropdown)
+// Search (PIN or dropdown)
 function search(){
-  let pin = document.getElementById("pin").value.trim();
-  let state = stateSelect.value;
-  let district = districtSelect.value;
-  let mandal = mandalSelect.value;
-  let village = villageSelect.value;
-  let villagesDiv = document.getElementById("villages");
+  let pin=document.getElementById("pin").value.trim();
+  let state=stateSelect.value;
+  let district=districtSelect.value;
+  let mandal=mandalSelect.value;
+  let village=villageSelect.value;
+  let villagesDiv=document.getElementById("villages");
   villagesDiv.innerHTML="";
 
   if(pin){
@@ -134,14 +142,14 @@ function search(){
           });
         } else villagesDiv.innerHTML="No data found";
       });
-  } else if(state && district && mandal && village){
-    addVillage(village,district,state,"");
+  } else if(state && district){
+    addVillage(district,district,state,"");
   } else {
-    villagesDiv.innerHTML="Enter PIN or select dropdowns";
+    villagesDiv.innerHTML="Enter PIN or select State & District";
   }
 }
 
-// Add one village item
+// Add village item
 function addVillage(village,district,state,pin){
   let villagesDiv=document.getElementById("villages");
   let div=document.createElement("div");
@@ -151,7 +159,7 @@ function addVillage(village,district,state,pin){
   villagesDiv.appendChild(div);
 }
 
-// Go to village
+// Map functions
 function goToVillage(village,district,state,pin,el){
   let query = `${village}, ${district}, ${state}, India`;
   if(activeVillage) activeVillage.classList.remove("active");
@@ -161,29 +169,30 @@ function goToVillage(village,district,state,pin,el){
   fetch("https://nominatim.openstreetmap.org/search?format=json&q="+encodeURIComponent(query))
     .then(r=>r.json())
     .then(loc=>{
-      if(loc.length > 0){
-        showMarker(loc[0].lat, loc[0].lon, village,district,state,pin,el);
+      if(loc.length>0){
+        showMarker(loc[0].lat,loc[0].lon,village,district,state,pin,el);
       } else alert("Location not found");
     });
 }
 
 function showMarker(lat,lon,village,district,state,pin,el){
   if(marker) map.removeLayer(marker);
-  marker = L.marker([lat,lon]).addTo(map)
+  marker=L.marker([lat,lon]).addTo(map)
     .bindPopup(`<b>${village}</b><br>${district}, ${state}<br>PIN: ${pin}`)
     .openPopup();
-  map.setView([lat,lon],13);
+  map.setView([lat,lon],10);
 
-  let existingLink = el.querySelector(".google-btn");
+  let existingLink=el.querySelector(".google-btn");
   if(existingLink) existingLink.remove();
 
-  let link = document.createElement("a");
-  link.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(village+", "+district+", "+state+", India")}`;
+  let link=document.createElement("a");
+  link.href=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(village+", "+district+", "+state+", India")}`;
   link.target="_blank";
   link.className="google-btn";
   link.innerText="Open in Google Maps";
   el.appendChild(link);
 }
 </script>
+
 </body>
 </html>
