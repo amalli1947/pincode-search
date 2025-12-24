@@ -1,99 +1,26 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>PIN Code Search</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body {
-            font-family: Arial;
-            background: #f0f4f8;
-            text-align: center;
-            padding: 20px;
-        }
-        h2 {
-            color: #333;
-        }
-        input {
-            padding: 14px;
-            width: 90%;
-            max-width: 300px;
-            font-size: 18px;
-        }
-        button {
-            padding: 14px 25px;
-            font-size: 18px;
-            background: #28a745;
-            color: white;
-            border: none;
-            margin-top: 10px;
-            cursor: pointer;
-        }
-        .card {
-            background: white;
-            padding: 20px;
-            margin: 20px auto;
-            max-width: 320px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px #ccc;
-        }
-        .telugu {
-            color: #555;
-            font-size: 15px;
-        }
-    </style>
-</head>
-<body>
-
 <h2>India PIN Code Search</h2>
 <p class="telugu">భారత పిన్ కోడ్ వివరాలు</p>
 
+<!-- Search by PIN -->
 <input type="text" id="pin" placeholder="Enter PIN / పిన్ కోడ్ నమోదు చేయండి">
 <br>
-<button onclick="searchPin()">Search / వెతకండి</button>
+<button onclick="searchPin()">Search by PIN / వెతకండి</button>
+
+<hr>
+
+<!-- Search by State + District -->
+<select id="state">
+    <option value="">Select State / రాష్ట్రం ఎంచుకోండి</option>
+    <option value="Andhra Pradesh">Andhra Pradesh</option>
+    <option value="Telangana">Telangana</option>
+    <option value="Karnataka">Karnataka</option>
+    <option value="Tamil Nadu">Tamil Nadu</option>
+    <option value="Maharashtra">Maharashtra</option>
+    <!-- You can add more states -->
+</select>
+<br><br>
+<input type="text" id="district" placeholder="Enter District / జిల్లా నమోదు చేయండి">
+<br>
+<button onclick="searchByDistrict()">Search by District / జిల్లా వెతకండి</button>
 
 <div id="result"></div>
-
-<script>
-function searchPin() {
-    var pin = document.getElementById("pin").value;
-    var result = document.getElementById("result");
-
-    // Check for 6-digit numeric PIN
-    if (!/^\d{6}$/.test(pin)) {
-        result.innerHTML = "<p>Invalid PIN code / తప్పు పిన్ కోడ్</p>";
-        return;
-    }
-
-    // Fetch from India Post API
-    fetch("https://api.postalpincode.in/pincode/" + pin)
-    .then(res => res.json())
-    .then(data => {
-        if (data[0].Status === "Success" && data[0].PostOffice.length > 0) {
-            var postOffices = data[0].PostOffice;
-            var html = "";
-            postOffices.forEach(p => {
-                html += `
-                <div class="card">
-                    <b>Post Office:</b> ${p.Name}<br>
-                    <b>District:</b> ${p.District}<br>
-                    <b>State:</b> ${p.State}<br><br>
-                    <span class="telugu">
-                    <b>పోస్ట్ ఆఫీస్:</b> ${p.Name}<br>
-                    <b>జిల్లా:</b> ${p.District}<br>
-                    <b>రాష్ట్రం:</b> ${p.State}
-                    </span>
-                </div>`;
-            });
-            result.innerHTML = html;
-        } else {
-            result.innerHTML = "<p>No data found / సమాచారం లభించలేదు</p>";
-        }
-    })
-    .catch(err => {
-        result.innerHTML = "<p>Error fetching data / డేటా పొందడంలో లోపం</p>";
-    });
-}
-</script>
-
-</body>
-</html>
