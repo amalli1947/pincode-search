@@ -9,7 +9,7 @@
 
 <style>
 body {
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   background: #eef2f7;
   margin: 0;
 }
@@ -159,7 +159,7 @@ function goToVillage(village, district, state, pin, divElement) {
       if (loc.length > 0) {
         showMarker(loc[0].lat, loc[0].lon, village, district, state, pin, divElement);
       } else {
-        // fallback to district
+        // fallback to district center
         let fallbackQuery = `${district}, ${state}, India`;
         fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(fallbackQuery))
           .then(r => r.json())
@@ -175,7 +175,7 @@ function goToVillage(village, district, state, pin, divElement) {
     .catch(err => console.log(err));
 }
 
-// Show marker and Google Maps link
+// Show marker and Google Maps button
 function showMarker(lat, lon, village, district, state, pin, divElement) {
   if (marker) map.removeLayer(marker);
 
@@ -189,9 +189,10 @@ function showMarker(lat, lon, village, district, state, pin, divElement) {
   let existingLink = divElement.querySelector(".google-btn");
   if(existingLink) existingLink.remove();
 
-  // Add Google Maps button
+  // Add Google Maps search link by name
+  let query = encodeURIComponent(`${village}, ${district}, ${state}, India`);
   let link = document.createElement("a");
-  link.href = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+  link.href = `https://www.google.com/maps/search/?api=1&query=${query}`;
   link.target = "_blank";
   link.className = "google-btn";
   link.innerText = "Open in Google Maps";
