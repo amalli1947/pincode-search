@@ -9,7 +9,7 @@
 
 <style>
 body {
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   background: #eef2f7;
   margin: 0;
 }
@@ -22,7 +22,7 @@ body {
 }
 
 .container {
-  max-width: 500px;
+  max-width: 600px;
   margin: auto;
   padding: 15px;
 }
@@ -40,6 +40,7 @@ input, button {
   margin-top: 10px;
   font-size: 16px;
   border-radius: 8px;
+  box-sizing: border-box;
 }
 
 button {
@@ -49,27 +50,35 @@ button {
   cursor: pointer;
 }
 
-.result {
-  background: white;
+.village-list {
+  max-height: 250px;
+  overflow-y: auto;
   margin-top: 10px;
-  padding: 10px;
+  background: white;
+  padding: 5px;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  cursor: pointer;
 }
 
-.result:hover {
+.village-item {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.village-item:hover {
   background: #d9f0e3;
 }
 
-#map {
-  height: 300px;
-  margin-top: 15px;
-  border-radius: 10px;
+.village-item.active {
+  background: #0d6efd;
+  color: white;
+  font-weight: bold;
 }
 
 .google-btn {
-  display: block;
+  display: inline-block;
   margin-top: 5px;
   padding: 5px 10px;
   background: #4285F4;
@@ -77,6 +86,19 @@ button {
   text-decoration: none;
   border-radius: 5px;
   font-size: 14px;
+}
+
+#map {
+  height: 350px;
+  margin-top: 15px;
+  border-radius: 10px;
+}
+
+.footer {
+  text-align: center;
+  font-size: 14px;
+  margin: 20px 0;
+  color: #555;
 }
 </style>
 </head>
@@ -94,8 +116,9 @@ button {
     <button onclick="searchPin()">Search</button>
   </div>
 
-  <div id="villages"></div>
+  <div id="villages" class="village-list"></div>
   <div id="map"></div>
+  <div class="footer">© 2025 PIN Code Search</div>
 
 </div>
 
@@ -104,6 +127,7 @@ button {
 <script>
 let map;
 let marker;
+let activeVillage = null;
 
 // Initialize map
 window.onload = function() {
@@ -120,7 +144,7 @@ function searchPin() {
   villagesDiv.innerHTML = "";
 
   if (!/^\d{6}$/.test(pin)) {
-    villagesDiv.innerHTML = "<div class='result'>❌ Enter valid 6-digit PIN</div>";
+    villagesDiv.innerHTML = "<div class='village-item'>❌ Enter valid 6-digit PIN</div>";
     return;
   }
 
@@ -128,23 +152,22 @@ function searchPin() {
     .then(res => res.json())
     .then(data => {
       if (data[0].Status !== "Success") {
-        villagesDiv.innerHTML = "<div class='result'>❌ No data found</div>";
+        villagesDiv.innerHTML = "<div class='village-item'>❌ No data found</div>";
         return;
       }
 
       let poList = data[0].PostOffice;
 
-      // Show villages as clickable divs
       poList.forEach(p => {
         let div = document.createElement("div");
-        div.className = "result";
+        div.className = "village-item";
         div.innerHTML = `<b>${p.Name}</b> (${p.District}, ${p.State})`;
         div.onclick = () => goToVillage(p.Name, p.District, p.State, pin, div);
         villagesDiv.appendChild(div);
       });
     })
     .catch(err => {
-      villagesDiv.innerHTML = "<div class='result'>❌ Error fetching data</div>";
+      villagesDiv.innerHTML = "<div class='village-item'>❌ Error fetching data</div>";
       console.log(err);
     });
 }
@@ -153,13 +176,17 @@ function searchPin() {
 function goToVillage(village, district, state, pin, divElement) {
   let query = `${village}, ${district}, ${state}, India`;
 
+  // Highlight active village
+  if(activeVillage) activeVillage.classList.remove("active");
+  divElement.classList.add("active");
+  activeVillage = divElement;
+
   fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(query))
     .then(res => res.json())
     .then(loc => {
       if (loc.length > 0) {
         showMarker(loc[0].lat, loc[0].lon, village, district, state, pin, divElement);
       } else {
-        // fallback to district center
         let fallbackQuery = `${district}, ${state}, India`;
         fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(fallbackQuery))
           .then(r => r.json())
@@ -189,7 +216,7 @@ function showMarker(lat, lon, village, district, state, pin, divElement) {
   let existingLink = divElement.querySelector(".google-btn");
   if(existingLink) existingLink.remove();
 
-  // Add Google Maps search link by name
+  // Add Google Maps search by name link
   let query = encodeURIComponent(`${village}, ${district}, ${state}, India`);
   let link = document.createElement("a");
   link.href = `https://www.google.com/maps/search/?api=1&query=${query}`;
