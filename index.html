@@ -1,133 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>India PIN Code & Village Search</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>India PIN Code Search</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      color: #333;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+}
 
-    /* HEADER */
-    header {
-      background: linear-gradient(90deg, #ff9933, #ffffff, #138808);
-      padding: 15px;
-      text-align: center;
-      border-bottom: 3px solid #138808;
-    }
+/* HEADER */
+header {
+  background: linear-gradient(90deg,#ff9933,#ffffff,#138808);
+  padding: 15px;
+  text-align: center;
+  border-bottom: 3px solid #138808;
+}
 
-    header img {
-      width: 80px;
-      display: block;
-      margin: 0 auto 5px;
-    }
+header h1 {
+  margin: 5px 0;
+  font-size: 22px;
+}
 
-    header h1 {
-      margin: 5px 0;
-      font-size: 22px;
-    }
+header p {
+  margin: 0;
+  font-size: 14px;
+}
 
-    header p {
-      margin: 0;
-      font-size: 14px;
-    }
+/* INDIA MAP SVG */
+.india-map {
+  width: 90px;
+  margin: 5px auto;
+}
 
-    /* MAIN */
-    .container {
-      max-width: 800px;
-      margin: 20px auto;
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
+/* MAIN */
+.container {
+  max-width: 800px;
+  margin: 20px auto;
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
 
-    .search-box {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
+.search-box {
+  display: flex;
+  gap: 10px;
+}
 
-    input {
-      flex: 1;
-      padding: 10px;
-      font-size: 16px;
-    }
+input {
+  flex: 1;
+  padding: 10px;
+  font-size: 16px;
+}
 
-    button {
-      padding: 10px 15px;
-      font-size: 16px;
-      cursor: pointer;
-      background: #138808;
-      color: white;
-      border: none;
-      border-radius: 4px;
-    }
+button {
+  padding: 10px 15px;
+  font-size: 16px;
+  cursor: pointer;
+  background: #138808;
+  color: white;
+  border: none;
+  border-radius: 4px;
+}
 
-    button:hover {
-      background: #0f6b06;
-    }
+button:hover {
+  background: #0f6b06;
+}
 
-    .results {
-      margin-top: 15px;
-    }
+.village {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+}
 
-    .village {
-      padding: 8px;
-      border-bottom: 1px solid #ddd;
-      cursor: pointer;
-    }
+.village:hover {
+  background: #f0f8ff;
+}
 
-    .village:hover {
-      background: #f0f8ff;
-    }
-
-    footer {
-      text-align: center;
-      padding: 10px;
-      font-size: 13px;
-      color: #555;
-    }
-  </style>
+footer {
+  text-align: center;
+  font-size: 13px;
+  padding: 10px;
+}
+</style>
 </head>
 
 <body>
 
 <header>
-  <!-- INDIA MAP ICON (SVG IMAGE) -->
-  <img src="https://upload.wikimedia.org/wikipedia/commons/4/4c/India_outline_map.svg" alt="India Map">
-  <h1>India PIN Code Search</h1>
-  <p>Search villages by PIN code • Open in Google Maps</p>
+
+<!-- INDIA MAP SVG (EMBEDDED – ALWAYS WORKS) -->
+<svg class="india-map" viewBox="0 0 200 200">
+  <path d="M60 10 L80 30 L70 50 L90 70 L85 95 L100 110 L120 130 L110 160 L95 185 L80 180 L70 160 L55 150 L45 120 L30 90 L40 60 Z"
+        fill="#138808" stroke="#000" stroke-width="2"/>
+</svg>
+
+<h1>India PIN Code Search</h1>
+<p>Search villages by PIN code • Open in Google Maps</p>
 </header>
 
 <div class="container">
 
-  <div class="search-box">
-    <input type="text" id="pinInput" placeholder="Enter 6-digit PIN code">
-    <button onclick="searchPin()">Search</button>
-  </div>
+<div class="search-box">
+  <input id="pinInput" placeholder="Enter 6-digit PIN code">
+  <button onclick="searchPin()">Search</button>
+</div>
 
-  <div id="results" class="results"></div>
+<div id="results"></div>
 
 </div>
 
 <footer>
-  © 2025 India PIN Search | Data Source: India Post API
+© 2025 India PIN Search
 </footer>
 
 <script>
 function searchPin() {
   const pin = document.getElementById("pinInput").value.trim();
-  const resultsDiv = document.getElementById("results");
-  resultsDiv.innerHTML = "";
+  const results = document.getElementById("results");
+  results.innerHTML = "";
 
   if (!/^[0-9]{6}$/.test(pin)) {
-    resultsDiv.innerHTML = "<p>Please enter a valid 6-digit PIN code.</p>";
+    results.innerHTML = "<p>Enter valid 6-digit PIN</p>";
     return;
   }
 
@@ -135,31 +133,20 @@ function searchPin() {
     .then(res => res.json())
     .then(data => {
       if (data[0].Status !== "Success") {
-        resultsDiv.innerHTML = "<p>No data found for this PIN.</p>";
+        results.innerHTML = "<p>No data found</p>";
         return;
       }
 
       data[0].PostOffice.forEach(po => {
         const div = document.createElement("div");
         div.className = "village";
-        div.innerHTML = `
-          <strong>${po.Name}</strong><br>
-          ${po.Block}, ${po.District}, ${po.State}
-        `;
-
+        div.innerHTML = `<b>${po.Name}</b><br>${po.Block}, ${po.District}, ${po.State}`;
         div.onclick = () => {
-          const query = `${po.Name}, ${po.District}, ${po.State}, India`;
-          window.open(
-            "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(query),
-            "_blank"
-          );
+          const q = `${po.Name}, ${po.District}, ${po.State}, India`;
+          window.open("https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q), "_blank");
         };
-
-        resultsDiv.appendChild(div);
+        results.appendChild(div);
       });
-    })
-    .catch(() => {
-      resultsDiv.innerHTML = "<p>Error fetching data. Try again later.</p>";
     });
 }
 </script>
