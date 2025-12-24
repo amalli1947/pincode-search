@@ -1,115 +1,103 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>India PIN Code Search</title>
+<title>AP PIN Code Search</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body {
-    font-family: Arial;
-    background: #f2f6fa;
-    text-align: center;
-    padding: 20px;
+  font-family: Arial;
+  background: #f4f6f8;
+  text-align: center;
+  padding: 20px;
 }
-input, button {
-    padding: 12px;
-    width: 90%;
-    max-width: 320px;
-    font-size: 16px;
-    margin: 5px;
-}
-button {
-    background: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
+select, button {
+  padding: 12px;
+  width: 90%;
+  max-width: 320px;
+  margin: 6px;
+  font-size: 16px;
 }
 .card {
-    background: white;
-    margin: 15px auto;
-    padding: 15px;
-    max-width: 350px;
-    border-radius: 8px;
-    box-shadow: 0 0 8px #ccc;
-}
-.telugu {
-    font-size: 14px;
-    color: #555;
+  background: white;
+  padding: 15px;
+  margin: 15px auto;
+  max-width: 350px;
+  border-radius: 8px;
+  box-shadow: 0 0 8px #ccc;
 }
 </style>
 </head>
 
 <body>
 
-<h2>India PIN Code Search</h2>
-<p class="telugu">భారత పిన్ కోడ్ వివరాలు</p>
+<h2>Andhra Pradesh PIN Code Search</h2>
+<p>రాష్ట్రం → జిల్లా → మండలం → గ్రామం</p>
 
-<!-- PIN SEARCH -->
-<input type="text" id="pin" placeholder="Enter PIN code">
-<button onclick="searchByPin()">Search by PIN</button>
+<select id="district" onchange="loadMandals()">
+  <option value="">Select District</option>
+  <option value="Nellore">Nellore</option>
+  <option value="Chittoor">Chittoor</option>
+</select>
 
-<hr>
+<select id="mandal" onchange="loadVillages()">
+  <option value="">Select Mandal</option>
+</select>
 
-<!-- POST OFFICE SEARCH -->
-<input type="text" id="po" placeholder="Enter Post Office Name">
-<button onclick="searchByPO()">Search by Post Office</button>
+<select id="village">
+  <option value="">Select Village</option>
+</select>
+
+<button onclick="showResult()">Search</button>
 
 <div id="result"></div>
 
 <script>
-function searchByPin() {
-    let pin = document.getElementById("pin").value;
-    let result = document.getElementById("result");
+const data = {
+  "Nellore": {
+    "Kavali": ["Kavali", "Bitragunta"],
+    "Atmakur": ["Atmakur", "Ananthasagaram"]
+  },
+  "Chittoor": {
+    "Tirupati": ["Tirupati", "Renigunta"],
+    "Puttur": ["Puttur", "Narayanavanam"]
+  }
+};
 
-    if (!/^\d{6}$/.test(pin)) {
-        result.innerHTML = "❌ Invalid PIN code";
-        return;
-    }
+function loadMandals() {
+  let d = district.value;
+  mandal.innerHTML = "<option>Select Mandal</option>";
+  village.innerHTML = "<option>Select Village</option>";
+  if (!data[d]) return;
 
-    fetch("https://api.postalpincode.in/pincode/" + pin)
-    .then(res => res.json())
-    .then(data => showData(data));
+  for (let m in data[d]) {
+    mandal.innerHTML += `<option>${m}</option>`;
+  }
 }
 
-function searchByPO() {
-    let po = document.getElementById("po").value.trim();
-    let result = document.getElementById("result");
+function loadVillages() {
+  let d = district.value;
+  let m = mandal.value;
+  village.innerHTML = "<option>Select Village</option>";
+  if (!data[d][m]) return;
 
-    if (po.length < 3) {
-        result.innerHTML = "❌ Enter valid Post Office name";
-        return;
-    }
-
-    fetch("https://api.postalpincode.in/postoffice/" + po)
-    .then(res => res.json())
-    .then(data => showData(data));
+  data[d][m].forEach(v => {
+    village.innerHTML += `<option>${v}</option>`;
+  });
 }
 
-function showData(data) {
-    let result = document.getElementById("result");
-
-    if (data[0].Status !== "Success") {
-        result.innerHTML = "❌ No data found";
-        return;
-    }
-
-    let html = "";
-    data[0].PostOffice.forEach(p => {
-        html += `
-        <div class="card">
-        <b>Post Office:</b> ${p.Name}<br>
-        <b>PIN:</b> ${p.Pincode}<br>
-        <b>District:</b> ${p.District}<br>
-        <b>State:</b> ${p.State}<br><br>
-        <span class="telugu">
-        <b>పోస్ట్ ఆఫీస్:</b> ${p.Name}<br>
-        <b>పిన్ కోడ్:</b> ${p.Pincode}<br>
-        <b>జిల్లా:</b> ${p.District}<br>
-        <b>రాష్ట్రం:</b> ${p.State}
-        </span>
-        </div>`;
-    });
-
-    result.innerHTML = html;
+function showResult() {
+  let v = village.value;
+  if (!v) {
+    result.innerHTML = "❌ Please select village";
+    return;
+  }
+  result.innerHTML = `
+    <div class="card">
+    <b>Village:</b> ${v}<br>
+    <b>State:</b> Andhra Pradesh<br>
+    <b>Note:</b> PIN codes can be added next
+    </div>
+  `;
 }
 </script>
 
