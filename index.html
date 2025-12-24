@@ -1,21 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>India PIN Code Search</title>
+<title>India PIN Code Finder</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Leaflet Map CSS -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
 
 <style>
 body {
   font-family: Arial, sans-serif;
   background: #eef2f7;
   margin: 0;
-  padding: 0;
-}
-
-.container {
-  max-width: 500px;
-  margin: auto;
-  padding: 20px;
 }
 
 .header {
@@ -23,60 +22,57 @@ body {
   color: white;
   padding: 20px;
   text-align: center;
-  border-radius: 0 0 20px 20px;
 }
 
-h2 {
-  margin: 0;
+.container {
+  max-width: 500px;
+  margin: auto;
+  padding: 15px;
 }
 
 .search-box {
   background: white;
-  margin-top: 20px;
   padding: 20px;
-  border-radius: 15px;
+  border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   text-align: center;
 }
 
-input {
+input, button {
   width: 100%;
   padding: 14px;
   font-size: 16px;
   margin-top: 10px;
   border-radius: 8px;
-  border: 1px solid #ccc;
 }
 
 button {
-  width: 100%;
-  margin-top: 15px;
-  padding: 14px;
-  font-size: 16px;
   background: #198754;
   color: white;
   border: none;
-  border-radius: 8px;
   cursor: pointer;
-}
-
-button:hover {
-  background: #157347;
 }
 
 .result-card {
   background: white;
   padding: 15px;
   margin-top: 15px;
-  border-radius: 12px;
+  border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Map box */
+#map {
+  height: 300px;
+  margin-top: 15px;
+  border-radius: 12px;
 }
 
 .footer {
   text-align: center;
   font-size: 14px;
+  margin: 20px 0;
   color: #555;
-  margin: 25px 0;
 }
 </style>
 </head>
@@ -85,32 +81,39 @@ button:hover {
 
 <div class="header">
   <h2>India PIN Code Finder</h2>
-  <p>Search villages & post offices by PIN</p>
+  <p>Search villages & view map</p>
 </div>
 
 <div class="container">
 
   <div class="search-box">
-    <h3>Enter PIN Code</h3>
-    <input type="text" id="pin" placeholder="Example: 524001">
+    <input type="text" id="pin" placeholder="Enter 6-digit PIN code">
     <button onclick="searchPin()">Search</button>
   </div>
 
   <div id="result"></div>
 
-  <div class="footer">
-    © 2025 PIN Code Search | India
-  </div>
+  <!-- Map -->
+  <div id="map"></div>
 
+  <div class="footer">
+    © 2025 PIN Code Search
+  </div>
 </div>
 
+<!-- Leaflet Map JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
+let map;
+let marker;
+
 function searchPin() {
   let pin = document.getElementById("pin").value;
   let result = document.getElementById("result");
 
   if (!/^\d{6}$/.test(pin)) {
-    result.innerHTML = "<div class='result-card'>❌ Please enter a valid 6-digit PIN</div>";
+    result.innerHTML = "<div class='result-card'>❌ Enter valid 6-digit PIN</div>";
     return;
   }
 
@@ -122,20 +125,47 @@ function searchPin() {
         return;
       }
 
+      let po = data[0].PostOffice[0];
+
+      // Show result
       let html = "";
       data[0].PostOffice.forEach(p => {
         html += `
           <div class="result-card">
-            <b>Village / Post Office:</b> ${p.Name}<br>
+            <b>Post Office:</b> ${p.Name}<br>
             <b>District:</b> ${p.District}<br>
             <b>State:</b> ${p.State}<br>
-            <b>PIN Code:</b> ${p.Pincode}
+            <b>PIN:</b> ${p.Pincode}
           </div>
         `;
       });
-
       result.innerHTML = html;
+
+      // Latitude & Longitude (India Post gives approx values)
+      let lat = po.Latitude || 20.5937;
+      let lon = po.Longitude || 78.9629;
+
+      showMap(lat, lon, po.Name + " - " + po.Pincode);
     });
+}
+
+function showMap(lat, lon, text) {
+  if (!map) {
+    map = L.map('map').setView([lat, lon], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+  } else {
+    map.setView([lat, lon], 13);
+  }
+
+  if (marker) {
+    marker.remove();
+  }
+
+  marker = L.marker([lat, lon]).addTo(map)
+    .bindPopup(text)
+    .openPopup();
 }
 </script>
 
