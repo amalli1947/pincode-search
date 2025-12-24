@@ -3,183 +3,169 @@
 <head>
 <meta charset="UTF-8">
 <title>India PIN Code Search</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
-  color: #333;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #f5f5f5;
 }
 
-/* HEADER */
 header {
-  background: #1a73e8;
-  color: white;
-  padding: 15px;
-  text-align: center;
+    background: #0d6efd;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
 }
 
-header h1 {
-  margin: 0;
-  font-size: 22px;
-}
-
-header p {
-  margin: 5px 0 0;
-  font-size: 14px;
-}
-
-/* CONTAINER */
 .container {
-  max-width: 900px;
-  margin: 20px auto;
-  background: white;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    max-width: 800px;
+    margin: 20px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 6px;
 }
 
-/* SEARCH BOX */
-.search-box {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-input {
-  flex: 1;
-  padding: 10px;
-  font-size: 16px;
+select, input, button {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    font-size: 16px;
 }
 
 button {
-  padding: 10px 15px;
-  font-size: 16px;
-  cursor: pointer;
-  background: #1a73e8;
-  color: white;
-  border: none;
-  border-radius: 4px;
+    background: #198754;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
 }
 
 button:hover {
-  background: #1558b0;
+    background: #146c43;
 }
 
-/* RESULTS */
 .result {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-  cursor: pointer;
+    margin-top: 15px;
+    padding: 10px;
+    background: #eef;
+    border-radius: 4px;
 }
 
-.result:hover {
-  background: #f0f8ff;
+.village {
+    padding: 8px;
+    border-bottom: 1px solid #ccc;
+    cursor: pointer;
 }
 
-/* FOOTER */
-footer {
-  text-align: center;
-  padding: 10px;
-  font-size: 13px;
-  color: #555;
+.village:hover {
+    background: #ddd;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <h1>India PIN Code Search</h1>
-  <p>Search by PIN or Village • Open in Google Maps</p>
-</header>
+<header>🇮🇳 INDIA PIN CODE SEARCH</header>
 
 <div class="container">
 
-  <!-- SEARCH BY PIN -->
-  <div class="search-box">
-    <input type="text" id="pinInput" placeholder="Enter 6-digit PIN code">
-    <button onclick="searchByPin()">Search by PIN</button>
-  </div>
+<h2>📍 Search by State → District → Village</h2>
 
-  <!-- SEARCH BY VILLAGE -->
-  <div class="search-box">
-    <input type="text" id="villageInput" placeholder="Enter Village / Post Office name">
-    <button onclick="searchByVillage()">Search by Village</button>
-  </div>
+<select id="stateSelect">
+<option value="">Select State</option>
+</select>
 
-  <div id="results"></div>
+<select id="districtSelect" disabled>
+<option value="">Select District</option>
+</select>
+
+<select id="villageSelect" disabled>
+<option value="">Select Village</option>
+</select>
+
+<div id="dropdownResult" class="result"></div>
 
 </div>
 
-<footer>
-  © 2025 India PIN Search
-</footer>
-
 <script>
-const resultsDiv = document.getElementById("results");
+let allData = [];
 
-/* SEARCH BY PIN */
-function searchByPin() {
-  const pin = document.getElementById("pinInput").value.trim();
-  resultsDiv.innerHTML = "";
+// Load ALL Post Office data (India)
+fetch("https://api.postalpincode.in/postoffice/India")
+.then(res => res.json())
+.then(data => {
+    allData = data[0].PostOffice;
+    loadStates();
+});
 
-  if (!/^[0-9]{6}$/.test(pin)) {
-    resultsDiv.innerHTML = "<p>Please enter a valid 6-digit PIN code.</p>";
-    return;
-  }
+function loadStates() {
+    const states = [...new Set(allData.map(p => p.State))].sort();
+    const stateSelect = document.getElementById("stateSelect");
 
-  fetch("https://api.postalpincode.in/pincode/" + pin)
-    .then(res => res.json())
-    .then(data => showResults(data))
-    .catch(() => resultsDiv.innerHTML = "<p>Error fetching data.</p>");
+    states.forEach(state => {
+        stateSelect.innerHTML += `<option value="${state}">${state}</option>`;
+    });
 }
 
-/* SEARCH BY VILLAGE */
-function searchByVillage() {
-  const village = document.getElementById("villageInput").value.trim();
-  resultsDiv.innerHTML = "";
+document.getElementById("stateSelect").addEventListener("change", function () {
+    const districtSelect = document.getElementById("districtSelect");
+    districtSelect.innerHTML = `<option value="">Select District</option>`;
+    districtSelect.disabled = false;
 
-  if (village.length < 3) {
-    resultsDiv.innerHTML = "<p>Please enter a valid village name.</p>";
-    return;
-  }
+    document.getElementById("villageSelect").disabled = true;
 
-  fetch("https://api.postalpincode.in/postoffice/" + encodeURIComponent(village))
-    .then(res => res.json())
-    .then(data => showResults(data))
-    .catch(() => resultsDiv.innerHTML = "<p>Error fetching data.</p>");
-}
+    const districts = [...new Set(
+        allData
+        .filter(p => p.State === this.value)
+        .map(p => p.District)
+    )].sort();
 
-/* DISPLAY RESULTS */
-function showResults(data) {
-  if (!data || data[0].Status !== "Success") {
-    resultsDiv.innerHTML = "<p>No data found.</p>";
-    return;
-  }
+    districts.forEach(d => {
+        districtSelect.innerHTML += `<option value="${d}">${d}</option>`;
+    });
+});
 
-  data[0].PostOffice.forEach(po => {
-    const div = document.createElement("div");
-    div.className = "result";
-    div.innerHTML = `
-      <strong>${po.Name}</strong><br>
-      PIN: ${po.Pincode}<br>
-      ${po.Block}, ${po.District}, ${po.State}
-    `;
+document.getElementById("districtSelect").addEventListener("change", function () {
+    const villageSelect = document.getElementById("villageSelect");
+    villageSelect.innerHTML = `<option value="">Select Village</option>`;
+    villageSelect.disabled = false;
 
-    div.onclick = () => {
-      const query = `${po.Name}, ${po.District}, ${po.State}, India`;
-      window.open(
+    const villages = allData.filter(p =>
+        p.State === stateSelect.value &&
+        p.District === this.value
+    );
+
+    villages.forEach(v => {
+        villageSelect.innerHTML +=
+        `<option value="${v.Name}|${v.Pincode}|${v.State}|${v.District}">
+        ${v.Name}
+        </option>`;
+    });
+});
+
+document.getElementById("villageSelect").addEventListener("change", function () {
+    const [name, pin, state, district] = this.value.split("|");
+    const result = document.getElementById("dropdownResult");
+
+    result.innerHTML = `
+    <div class="village"
+    onclick="openMap('${name}','${district}','${state}')">
+    🏠 <b>${name}</b><br>
+    PIN: ${pin}<br>
+    ${district}, ${state}
+    </div>`;
+});
+
+function openMap(village, district, state) {
+    const query = `${village}, ${district}, ${state}, India`;
+    window.open(
         "https://www.google.com/maps/search/?api=1&query=" +
         encodeURIComponent(query),
         "_blank"
-      );
-    };
-
-    resultsDiv.appendChild(div);
-  });
+    );
 }
 </script>
 
