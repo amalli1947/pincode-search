@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Andhra Pradesh PIN & District Search</title>
+<title>India PIN & Village Search</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
@@ -26,14 +26,14 @@ button { background: #198754; color: white; border: none; cursor: pointer; }
 <body>
 
 <div class="header">
-  <h2>Andhra Pradesh PIN & Village Search</h2>
+  <h2>India PIN & Village Search</h2>
 </div>
 
 <div class="container">
 
   <div class="box">
     <input id="pin" placeholder="Enter 6-digit PIN">
-    <select id="district"><option value="">Select District</option></select>
+    <select id="district"><option value="">Select District (Andhra Pradesh)</option></select>
     <select id="mandal"><option value="">Select Mandal</option></select>
     <select id="village"><option value="">Select Village</option></select>
     <button onclick="search()">Search</button>
@@ -55,7 +55,7 @@ button { background: #198754; color: white; border: none; cursor: pointer; }
       <div style="background:#f0f0f0; color:#555; padding:10px; border-radius:5px;">Ad Spot 3</div>
   </div>
 
-  <div class="footer">© 2025 Andhra Pradesh PIN Code Search</div>
+  <div class="footer">© 2025 India PIN & Village Search</div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -97,13 +97,13 @@ const districts = [
   "Polavaram"
 ];
 
-// Populate district dropdown
 const districtSelect=document.getElementById("district");
 const mandalSelect=document.getElementById("mandal");
 const villageSelect=document.getElementById("village");
 
+// Populate districts
 function populateDistricts(){
-  districtSelect.innerHTML='<option value="">Select District</option>';
+  districtSelect.innerHTML='<option value="">Select District (Andhra Pradesh)</option>';
   districts.forEach(d => {
     districtSelect.innerHTML += `<option value="${d}">${d}</option>`;
   });
@@ -118,7 +118,7 @@ districtSelect.onchange=function(){
   villageSelect.innerHTML='<option value="">Select Village</option>';
 }
 
-// Handle search function
+// Handle search
 function search(){
   let pin=document.getElementById("pin").value.trim();
   let district=districtSelect.value;
