@@ -4,11 +4,8 @@
 <title>India PIN Code Finder</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Leaflet Map CSS -->
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
 <style>
 body {
@@ -61,7 +58,6 @@ button {
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-/* Map box */
 #map {
   height: 300px;
   margin-top: 15px;
@@ -81,7 +77,7 @@ button {
 
 <div class="header">
   <h2>India PIN Code Finder</h2>
-  <p>Search villages & view map</p>
+  <p>Villages & Map View</p>
 </div>
 
 <div class="container">
@@ -92,21 +88,17 @@ button {
   </div>
 
   <div id="result"></div>
-
-  <!-- Map -->
   <div id="map"></div>
 
-  <div class="footer">
-    © 2025 PIN Code Search
-  </div>
+  <div class="footer">© 2025 PIN Code Search</div>
 </div>
 
-<!-- Leaflet Map JS -->
+<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
 let map;
-let marker;
+let markers = [];
 
 function searchPin() {
   let pin = document.getElementById("pin").value;
@@ -125,47 +117,50 @@ function searchPin() {
         return;
       }
 
-      let po = data[0].PostOffice[0];
+      result.innerHTML = "";
+      clearMarkers();
 
-      // Show result
-      let html = "";
+      let bounds = [];
+
       data[0].PostOffice.forEach(p => {
-        html += `
+        result.innerHTML += `
           <div class="result-card">
-            <b>Post Office:</b> ${p.Name}<br>
+            <b>Village / PO:</b> ${p.Name}<br>
             <b>District:</b> ${p.District}<br>
             <b>State:</b> ${p.State}<br>
             <b>PIN:</b> ${p.Pincode}
           </div>
         `;
+
+        if (p.Latitude && p.Longitude) {
+          let lat = parseFloat(p.Latitude);
+          let lon = parseFloat(p.Longitude);
+
+          let m = L.marker([lat, lon])
+            .bindPopup(`<b>${p.Name}</b><br>${p.District}`)
+            .addTo(map);
+
+          markers.push(m);
+          bounds.push([lat, lon]);
+        }
       });
-      result.innerHTML = html;
 
-      // Latitude & Longitude (India Post gives approx values)
-      let lat = po.Latitude || 20.5937;
-      let lon = po.Longitude || 78.9629;
-
-      showMap(lat, lon, po.Name + " - " + po.Pincode);
+      if (bounds.length > 0) {
+        map.fitBounds(bounds);
+      }
     });
 }
 
-function showMap(lat, lon, text) {
+function clearMarkers() {
   if (!map) {
-    map = L.map('map').setView([lat, lon], 13);
+    map = L.map('map').setView([20.5937, 78.9629], 5);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
     }).addTo(map);
-  } else {
-    map.setView([lat, lon], 13);
   }
 
-  if (marker) {
-    marker.remove();
-  }
-
-  marker = L.marker([lat, lon]).addTo(map)
-    .bindPopup(text)
-    .openPopup();
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
 }
 </script>
 
