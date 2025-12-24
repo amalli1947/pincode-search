@@ -9,7 +9,7 @@
 
 <style>
 body {
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   background: #eef2f7;
   margin: 0;
 }
@@ -68,11 +68,15 @@ button {
   border-radius: 10px;
 }
 
-.footer {
-  text-align: center;
+.google-btn {
+  display: block;
+  margin-top: 5px;
+  padding: 5px 10px;
+  background: #4285F4;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
   font-size: 14px;
-  margin: 20px 0;
-  color: #555;
 }
 </style>
 </head>
@@ -93,7 +97,6 @@ button {
   <div id="villages"></div>
   <div id="map"></div>
 
-  <div class="footer">© 2025 PIN Code Search</div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -136,7 +139,7 @@ function searchPin() {
         let div = document.createElement("div");
         div.className = "result";
         div.innerHTML = `<b>${p.Name}</b> (${p.District}, ${p.State})`;
-        div.onclick = () => goToVillage(p.Name, p.District, p.State, pin);
+        div.onclick = () => goToVillage(p.Name, p.District, p.State, pin, div);
         villagesDiv.appendChild(div);
       });
     })
@@ -146,25 +149,25 @@ function searchPin() {
     });
 }
 
-// Go to village or fallback to district
-function goToVillage(village, district, state, pin) {
+// Go to village on map and show Google Maps link
+function goToVillage(village, district, state, pin, divElement) {
   let query = `${village}, ${district}, ${state}, India`;
 
   fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(query))
     .then(res => res.json())
     .then(loc => {
       if (loc.length > 0) {
-        showMarker(loc[0].lat, loc[0].lon, village, district, state, pin);
+        showMarker(loc[0].lat, loc[0].lon, village, district, state, pin, divElement);
       } else {
-        // Fallback to district center
+        // fallback to district
         let fallbackQuery = `${district}, ${state}, India`;
         fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(fallbackQuery))
           .then(r => r.json())
           .then(fallbackLoc => {
             if(fallbackLoc.length > 0){
-              showMarker(fallbackLoc[0].lat, fallbackLoc[0].lon, village, district, state, pin);
+              showMarker(fallbackLoc[0].lat, fallbackLoc[0].lon, village, district, state, pin, divElement);
             } else {
-              alert("Location not found for " + village + " or district.");
+              alert("Location not found for " + village);
             }
           });
       }
@@ -172,8 +175,8 @@ function goToVillage(village, district, state, pin) {
     .catch(err => console.log(err));
 }
 
-// Show marker on map
-function showMarker(lat, lon, village, district, state, pin) {
+// Show marker and Google Maps link
+function showMarker(lat, lon, village, district, state, pin, divElement) {
   if (marker) map.removeLayer(marker);
 
   marker = L.marker([lat, lon]).addTo(map)
@@ -181,6 +184,18 @@ function showMarker(lat, lon, village, district, state, pin) {
     .openPopup();
 
   map.setView([lat, lon], 13);
+
+  // Remove existing Google Maps link if any
+  let existingLink = divElement.querySelector(".google-btn");
+  if(existingLink) existingLink.remove();
+
+  // Add Google Maps button
+  let link = document.createElement("a");
+  link.href = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+  link.target = "_blank";
+  link.className = "google-btn";
+  link.innerText = "Open in Google Maps";
+  divElement.appendChild(link);
 }
 </script>
 
