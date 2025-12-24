@@ -1,185 +1,166 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>India PIN & Village Search</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<style>
-body { font-family: Arial; background: #eef2f7; margin: 0; }
-.header { background: #0d6efd; color: white; padding: 15px; text-align: center; }
-.container { max-width: 700px; margin: auto; padding: 15px; }
-.box { background: white; padding: 15px; border-radius: 10px; text-align: center; }
-select, input, button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; font-size: 16px; }
-button { background: #198754; color: white; border: none; cursor: pointer; }
-.village-list { max-height: 250px; overflow-y: auto; margin-top: 10px; background: white; padding: 5px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-.village-item { padding: 8px; border-bottom: 1px solid #ddd; cursor: pointer; border-radius: 5px; }
-.village-item:hover { background: #d9f0e3; }
-.village-item.active { background: #0d6efd; color: white; font-weight: bold; }
-.google-btn { display: inline-block; margin-top: 5px; padding: 5px 10px; background: #4285F4; color: white; text-decoration: none; border-radius: 5px; font-size: 14px; }
-#ad-placeholder { margin-top: 15px; text-align: center; }
-#map { height: 350px; margin-top: 15px; border-radius: 10px; }
-.footer { text-align: center; font-size: 14px; margin: 20px 0; color: #555; }
-</style>
+  <meta charset="UTF-8">
+  <title>India PIN Code & Village Search</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      color: #333;
+    }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(90deg, #ff9933, #ffffff, #138808);
+      padding: 15px;
+      text-align: center;
+      border-bottom: 3px solid #138808;
+    }
+
+    header img {
+      width: 80px;
+      display: block;
+      margin: 0 auto 5px;
+    }
+
+    header h1 {
+      margin: 5px 0;
+      font-size: 22px;
+    }
+
+    header p {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    /* MAIN */
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    input {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #138808;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background: #0f6b06;
+    }
+
+    .results {
+      margin-top: 15px;
+    }
+
+    .village {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+      cursor: pointer;
+    }
+
+    .village:hover {
+      background: #f0f8ff;
+    }
+
+    footer {
+      text-align: center;
+      padding: 10px;
+      font-size: 13px;
+      color: #555;
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="header">
-  <h2>India PIN & Village Search</h2>
-</div>
+<header>
+  <!-- INDIA MAP ICON (SVG IMAGE) -->
+  <img src="https://upload.wikimedia.org/wikipedia/commons/4/4c/India_outline_map.svg" alt="India Map">
+  <h1>India PIN Code Search</h1>
+  <p>Search villages by PIN code • Open in Google Maps</p>
+</header>
 
 <div class="container">
 
-  <div class="box">
-    <input id="pin" placeholder="Enter 6-digit PIN">
-    <select id="district"><option value="">Select District (Andhra Pradesh)</option></select>
-    <select id="mandal"><option value="">Select Mandal</option></select>
-    <select id="village"><option value="">Select Village</option></select>
-    <button onclick="search()">Search</button>
+  <div class="search-box">
+    <input type="text" id="pinInput" placeholder="Enter 6-digit PIN code">
+    <button onclick="searchPin()">Search</button>
   </div>
 
-  <div id="ad-spot-1" class="ad-placeholder">
-      <div style="background:#f0f0f0; color:#555; padding:10px; border-radius:5px;">Ad Spot 1</div>
-  </div>
+  <div id="results" class="results"></div>
 
-  <div id="villages" class="village-list"></div>
-
-  <div id="ad-spot-2" class="ad-placeholder">
-      <div style="background:#f0f0f0; color:#555; padding:10px; border-radius:5px;">Ad Spot 2</div>
-  </div>
-
-  <div id="map"></div>
-
-  <div id="ad-spot-3" class="ad-placeholder">
-      <div style="background:#f0f0f0; color:#555; padding:10px; border-radius:5px;">Ad Spot 3</div>
-  </div>
-
-  <div class="footer">© 2025 India PIN & Village Search</div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<footer>
+  © 2025 India PIN Search | Data Source: India Post API
+</footer>
+
 <script>
-let map, marker, activeVillage=null;
-map = L.map('map').setView([16.5,80.6],6);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap' }).addTo(map);
+function searchPin() {
+  const pin = document.getElementById("pinInput").value.trim();
+  const resultsDiv = document.getElementById("results");
+  resultsDiv.innerHTML = "";
 
-// Updated full district list for Andhra Pradesh
-const districts = [
-  "Alluri Sitharama Raju",
-  "Anakapalli",
-  "Ananthapuramu",
-  "Annamayya",
-  "Bapatla",
-  "Chittoor",
-  "Dr. B.R. Ambedkar Konaseema",
-  "East Godavari",
-  "Eluru",
-  "Guntur",
-  "Kakinada",
-  "Krishna",
-  "Kurnool",
-  "Nandyal",
-  "NTR",
-  "Palnadu",
-  "Parvathipuram Manyam",
-  "Prakasam",
-  "Sri Potti Sriramulu Nellore",
-  "Sri Sathya Sai",
-  "Srikakulam",
-  "Tirupati",
-  "Visakhapatnam",
-  "Vizianagaram",
-  "West Godavari",
-  "YSR Kadapa",
-  "Markapuram",
-  "Madanapalle",
-  "Polavaram"
-];
-
-const districtSelect=document.getElementById("district");
-const mandalSelect=document.getElementById("mandal");
-const villageSelect=document.getElementById("village");
-
-// Populate districts
-function populateDistricts(){
-  districtSelect.innerHTML='<option value="">Select District (Andhra Pradesh)</option>';
-  districts.forEach(d => {
-    districtSelect.innerHTML += `<option value="${d}">${d}</option>`;
-  });
-  mandalSelect.innerHTML='<option value="">Select Mandal</option>';
-  villageSelect.innerHTML='<option value="">Select Village</option>';
-}
-populateDistricts();
-
-// Clear nested dropdowns
-districtSelect.onchange=function(){
-  mandalSelect.innerHTML='<option value="">Select Mandal</option>';
-  villageSelect.innerHTML='<option value="">Select Village</option>';
-}
-
-// Handle search
-function search(){
-  let pin=document.getElementById("pin").value.trim();
-  let district=districtSelect.value;
-  let mandal=mandalSelect.value;
-  let village=villageSelect.value;
-  let villagesDiv=document.getElementById("villages");
-  villagesDiv.innerHTML="";
-
-  if(pin){
-    fetch("https://api.postalpincode.in/pincode/"+pin)
-      .then(r=>r.json())
-      .then(d=>{
-        if(d[0].Status==="Success"){
-          d[0].PostOffice.forEach(p=>addVillage(p.Name,p.District,p.State,p.Pincode));
-        } else villagesDiv.innerHTML="No data found";
-      });
-  } else if(district){
-    addVillage(district,district,"Andhra Pradesh","");
-  } else {
-    villagesDiv.innerHTML="Enter PIN or select district";
+  if (!/^[0-9]{6}$/.test(pin)) {
+    resultsDiv.innerHTML = "<p>Please enter a valid 6-digit PIN code.</p>";
+    return;
   }
-}
 
-function addVillage(village,district,state,pin){
-  let villagesDiv=document.getElementById("villages");
-  let div=document.createElement("div");
-  div.className="village-item";
-  div.innerHTML=`<b>${village}</b> (${district}, ${state}) PIN: ${pin}`;
-  div.onclick=()=>goToVillage(village,district,state,pin,div);
-  villagesDiv.appendChild(div);
-}
+  fetch("https://api.postalpincode.in/pincode/" + pin)
+    .then(res => res.json())
+    .then(data => {
+      if (data[0].Status !== "Success") {
+        resultsDiv.innerHTML = "<p>No data found for this PIN.</p>";
+        return;
+      }
 
-function goToVillage(village,district,state,pin,el){
-  let query=`${village}, ${district}, ${state}, India`;
-  if(activeVillage) activeVillage.classList.remove("active");
-  el.classList.add("active");
-  activeVillage=el;
+      data[0].PostOffice.forEach(po => {
+        const div = document.createElement("div");
+        div.className = "village";
+        div.innerHTML = `
+          <strong>${po.Name}</strong><br>
+          ${po.Block}, ${po.District}, ${po.State}
+        `;
 
-  fetch("https://nominatim.openstreetmap.org/search?format=json&q="+encodeURIComponent(query))
-    .then(r=>r.json())
-    .then(loc => {
-      if(loc.length>0) showMarker(loc[0].lat,loc[0].lon,village,district,state,pin,el);
-      else alert("Location not found");
+        div.onclick = () => {
+          const query = `${po.Name}, ${po.District}, ${po.State}, India`;
+          window.open(
+            "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(query),
+            "_blank"
+          );
+        };
+
+        resultsDiv.appendChild(div);
+      });
+    })
+    .catch(() => {
+      resultsDiv.innerHTML = "<p>Error fetching data. Try again later.</p>";
     });
-}
-
-function showMarker(lat,lon,village,district,state,pin,el){
-  if(marker) map.removeLayer(marker);
-  marker=L.marker([lat,lon]).addTo(map)
-    .bindPopup(`<b>${village}</b><br>${district}, ${state}<br>PIN: ${pin}`)
-    .openPopup();
-  map.setView([lat,lon],10);
-
-  let existingLink=el.querySelector(".google-btn");
-  if(existingLink) existingLink.remove();
-
-  let link=document.createElement("a");
-  link.href=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(village+", "+district+", "+state+", India")}`;
-  link.target="_blank"; link.className="google-btn";
-  link.innerText="Open in Google Maps";
-  el.appendChild(link);
 }
 </script>
 
