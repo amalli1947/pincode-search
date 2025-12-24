@@ -1,27 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>AP PIN Code Search</title>
+<title>Andhra Pradesh PIN Code Search</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body {
-  font-family: Arial;
-  background: #f4f6f8;
+  font-family: Arial, sans-serif;
+  background: #f2f4f7;
   text-align: center;
   padding: 20px;
 }
 select, button {
   padding: 12px;
   width: 90%;
-  max-width: 320px;
+  max-width: 350px;
   margin: 6px;
   font-size: 16px;
+}
+button {
+  background: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
 }
 .card {
   background: white;
   padding: 15px;
   margin: 15px auto;
-  max-width: 350px;
+  max-width: 380px;
   border-radius: 8px;
   box-shadow: 0 0 8px #ccc;
 }
@@ -33,16 +39,41 @@ select, button {
 <h2>Andhra Pradesh PIN Code Search</h2>
 <p>రాష్ట్రం → జిల్లా → మండలం → గ్రామం</p>
 
+<!-- DISTRICT -->
 <select id="district" onchange="loadMandals()">
   <option value="">Select District</option>
-  <option value="Nellore">Nellore</option>
-  <option value="Chittoor">Chittoor</option>
+  <option>Alluri Sitharama Raju</option>
+  <option>Anakapalli</option>
+  <option>Ananthapuramu</option>
+  <option>Annamayya</option>
+  <option>Bapatla</option>
+  <option>Chittoor</option>
+  <option>Dr. B.R. Ambedkar Konaseema</option>
+  <option>East Godavari</option>
+  <option>Eluru</option>
+  <option>Guntur</option>
+  <option>Kakinada</option>
+  <option>Krishna</option>
+  <option>Kurnool</option>
+  <option>Nandyal</option>
+  <option>Nellore</option>
+  <option>Palnadu</option>
+  <option>Parvathipuram Manyam</option>
+  <option>Prakasam</option>
+  <option>Srikakulam</option>
+  <option>Sri Sathya Sai</option>
+  <option>Tirupati</option>
+  <option>Visakhapatnam</option>
+  <option>Vizianagaram</option>
+  <option>West Godavari</option>
 </select>
 
+<!-- MANDAL -->
 <select id="mandal" onchange="loadVillages()">
   <option value="">Select Mandal</option>
 </select>
 
+<!-- VILLAGE -->
 <select id="village">
   <option value="">Select Village</option>
 </select>
@@ -54,7 +85,7 @@ select, button {
 <script>
 const data = {
   "Nellore": {
-    "Kavali": ["Kavali", "Bitragunta"],
+    "Kavali": ["Kavali", "Bitragunta", "Chakalakonda"],
     "Atmakur": ["Atmakur", "Ananthasagaram"]
   },
   "Chittoor": {
@@ -64,9 +95,10 @@ const data = {
 };
 
 function loadMandals() {
+  mandal.innerHTML = "<option value=''>Select Mandal</option>";
+  village.innerHTML = "<option value=''>Select Village</option>";
+
   let d = district.value;
-  mandal.innerHTML = "<option>Select Mandal</option>";
-  village.innerHTML = "<option>Select Village</option>";
   if (!data[d]) return;
 
   for (let m in data[d]) {
@@ -75,10 +107,11 @@ function loadMandals() {
 }
 
 function loadVillages() {
+  village.innerHTML = "<option value=''>Select Village</option>";
+
   let d = district.value;
   let m = mandal.value;
-  village.innerHTML = "<option>Select Village</option>";
-  if (!data[d][m]) return;
+  if (!data[d] || !data[d][m]) return;
 
   data[d][m].forEach(v => {
     village.innerHTML += `<option>${v}</option>`;
@@ -86,16 +119,22 @@ function loadVillages() {
 }
 
 function showResult() {
+  let d = district.value;
+  let m = mandal.value;
   let v = village.value;
-  if (!v) {
-    result.innerHTML = "❌ Please select village";
+
+  if (!d || !m || !v) {
+    result.innerHTML = "❌ Please select District, Mandal and Village";
     return;
   }
+
   result.innerHTML = `
     <div class="card">
-    <b>Village:</b> ${v}<br>
-    <b>State:</b> Andhra Pradesh<br>
-    <b>Note:</b> PIN codes can be added next
+      <b>State:</b> Andhra Pradesh<br>
+      <b>District:</b> ${d}<br>
+      <b>Mandal:</b> ${m}<br>
+      <b>Village:</b> ${v}<br><br>
+      <b>Note:</b> PIN code mapping can be added next
     </div>
   `;
 }
