@@ -5,6 +5,7 @@
 <title>India PIN Code Search</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
 <style>
@@ -31,6 +32,7 @@ body {
   background: white;
   padding: 15px;
   border-radius: 10px;
+  text-align: center;
 }
 
 input, button {
@@ -38,12 +40,14 @@ input, button {
   padding: 12px;
   margin-top: 10px;
   font-size: 16px;
+  border-radius: 8px;
 }
 
 button {
   background: #198754;
   color: white;
   border: none;
+  cursor: pointer;
 }
 
 .result {
@@ -51,12 +55,20 @@ button {
   margin-top: 10px;
   padding: 10px;
   border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
 #map {
   height: 300px;
   margin-top: 15px;
   border-radius: 10px;
+}
+
+.footer {
+  text-align: center;
+  font-size: 14px;
+  margin: 20px 0;
+  color: #555;
 }
 </style>
 </head>
@@ -70,76 +82,94 @@ button {
 <div class="container">
 
   <div class="box">
-    <input id="pin" placeholder="Enter 6 digit PIN">
+    <input id="pin" placeholder="Enter 6-digit PIN">
     <button onclick="searchPin()">Search</button>
   </div>
 
   <div id="result"></div>
   <div id="map"></div>
 
+  <div class="footer">© 2025 PIN Code Search</div>
 </div>
 
+<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
 let map;
 let marker;
 
-function initMap() {
+// Initialize map after page loads
+window.onload = function() {
   map = L.map('map').setView([20.5937, 78.9629], 5);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
   }).addTo(map);
-}
-
-window.onload = initMap;
+};
 
 function searchPin() {
-  let pin = document.getElementById("pin").value;
+  let pin = document.getElementById("pin").value.trim();
   let result = document.getElementById("result");
 
   if (!/^\d{6}$/.test(pin)) {
-    result.innerHTML = "❌ Enter valid 6-digit PIN";
+    result.innerHTML = "<div class='result'>❌ Enter valid 6-digit PIN</div>";
     return;
   }
 
+  // Fetch PIN data from India Post API
   fetch("https://api.postalpincode.in/pincode/" + pin)
     .then(res => res.json())
     .then(data => {
       if (data[0].Status !== "Success") {
-        result.innerHTML = "❌ No data found";
+        result.innerHTML = "<div class='result'>❌ No data found</div>";
         return;
       }
 
       result.innerHTML = "";
+      let poList = data[0].PostOffice;
 
-      data[0].PostOffice.forEach(p => {
+      // Display all villages / post offices
+      let villageList = "";
+      poList.forEach(p => {
         result.innerHTML += `
           <div class="result">
             <b>${p.Name}</b><br>
-            ${p.District}, ${p.State}
+            ${p.District}, ${p.State}<br>
+            PIN: ${p.Pincode}
           </div>`;
+        villageList += p.Name + "<br>";
       });
 
-      let place = data[0].PostOffice[0].District + ", " +
-                  data[0].PostOffice[0].State + ", India";
+      // Get district + state location using OpenStreetMap
+      let locationQuery = poList[0].District + ", " + poList[0].State + ", India";
 
-      fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(place))
+      fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(locationQuery))
         .then(r => r.json())
         .then(loc => {
           if (loc.length > 0) {
             let lat = loc[0].lat;
             let lon = loc[0].lon;
 
+            // Remove previous marker
             if (marker) map.removeLayer(marker);
 
+            // Add new marker
             marker = L.marker([lat, lon]).addTo(map)
-              .bindPopup(place)
+              .bindPopup(
+                `<b>PIN:</b> ${pin}<br>` +
+                `<b>District:</b> ${poList[0].District}<br>` +
+                `<b>Villages / POs:</b><br>` + villageList
+              )
               .openPopup();
 
             map.setView([lat, lon], 11);
           }
-        });
+        })
+        .catch(err => console.log("Map error:", err));
+    })
+    .catch(err => {
+      result.innerHTML = "<div class='result'>❌ Error fetching data</div>";
+      console.log(err);
     });
 }
 </script>
