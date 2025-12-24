@@ -131,7 +131,7 @@ function searchPin() {
 
       let poList = data[0].PostOffice;
 
-      // Show all villages as clickable divs
+      // Show villages as clickable divs
       poList.forEach(p => {
         let div = document.createElement("div");
         div.className = "result";
@@ -146,28 +146,41 @@ function searchPin() {
     });
 }
 
-// Go to village on map
+// Go to village or fallback to district
 function goToVillage(village, district, state, pin) {
   let query = `${village}, ${district}, ${state}, India`;
+
   fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(query))
     .then(res => res.json())
     .then(loc => {
       if (loc.length > 0) {
-        let lat = loc[0].lat;
-        let lon = loc[0].lon;
-
-        if (marker) map.removeLayer(marker);
-
-        marker = L.marker([lat, lon]).addTo(map)
-          .bindPopup(`<b>${village}</b><br>${district}, ${state}<br>PIN: ${pin}`)
-          .openPopup();
-
-        map.setView([lat, lon], 13);
+        showMarker(loc[0].lat, loc[0].lon, village, district, state, pin);
       } else {
-        alert("Location not found for " + village);
+        // Fallback to district center
+        let fallbackQuery = `${district}, ${state}, India`;
+        fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(fallbackQuery))
+          .then(r => r.json())
+          .then(fallbackLoc => {
+            if(fallbackLoc.length > 0){
+              showMarker(fallbackLoc[0].lat, fallbackLoc[0].lon, village, district, state, pin);
+            } else {
+              alert("Location not found for " + village + " or district.");
+            }
+          });
       }
     })
     .catch(err => console.log(err));
+}
+
+// Show marker on map
+function showMarker(lat, lon, village, district, state, pin) {
+  if (marker) map.removeLayer(marker);
+
+  marker = L.marker([lat, lon]).addTo(map)
+    .bindPopup(`<b>${village}</b><br>${district}, ${state}<br>PIN: ${pin}`)
+    .openPopup();
+
+  map.setView([lat, lon], 13);
 }
 </script>
 
